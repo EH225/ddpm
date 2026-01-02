@@ -73,6 +73,7 @@ class Trainer:
         checkpoint_path = os.path.join(self.results_folder, f"model-{milestone}.pt")
         print(f"Saving model to {checkpoint_path}.")
         data = {"step": self.step,
+                "all_losses": self.all_losses,
                 "model": self.diffusion_model.state_dict(),
                 "opt": self.opt.state_dict(),
                 }
@@ -87,11 +88,14 @@ class Trainer:
         """
         checkpoint_path = os.path.join(self.results_folder, f"model-{milestone}.pt")
         print(f"Loading model from {checkpoint_path}.")
-        data = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
+        checkpoint_data = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
 
-        self.diffusion_model.load_state_dict(data["model"])
-        self.step = data["step"]
-        self.opt.load_state_dict(data["opt"])
+        # Re-instate the training step counter, loss values, model weights and optimizer state from the
+        # checkpoint data read in from disk
+        self.step = checkpoint_data["step"]
+        self.all_losses = checkpoint_data["all_losses"]
+        self.diffusion_model.load_state_dict(checkpoint_data["model"])
+        self.opt.load_state_dict(checkpoint_data["opt"])
 
         # Move the model and the optimizer to the same device to continue training or for inference
         device = self.device
@@ -104,7 +108,7 @@ class Trainer:
                     if isinstance(v, torch.Tensor):
                         state[k] = v.to(device)
 
-    def train(self) -> List[float]:
+    def train(self) -> None:
         """
         Runs the training of the model until completion for self.train_num_steps total training iterations.
         Returns a list of the losses obtained for each training timestep.
@@ -112,7 +116,7 @@ class Trainer:
         device = self.device
         self.diffusion_model.to(device)  # Move the model to the correct device
 
-        all_losses = []
+        self.all_losses = []
 
         with tqdm(initial=self.step, total=self.train_num_steps) as pbar:
 
@@ -128,7 +132,7 @@ class Trainer:
                 self.opt.step()  # Update the model parameters by taking a gradient step
 
                 pbar.set_description(f"loss: {loss.item():.4f}")
-                all_losses.append(loss.item())  # Aggregate all the loss values for each timestep
+                self.all_losses.append(loss.item())  # Aggregate all the loss values for each timestep
 
                 self.step += 1
 
@@ -149,5 +153,3 @@ class Trainer:
                                nrow=int(math.sqrt(self.num_samples)))
 
                 pbar.update(1)
-
-        return all_losses
