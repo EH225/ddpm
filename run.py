@@ -24,7 +24,7 @@ def train_model(config: Dict) -> None:
     print("Number of parameters:", sum(p.numel() for p in unet_model.parameters()))
 
     # 2).Init the Gaussian Diffusion model with the U-Net as its model
-    ddpm = GaussianDiffusion(**config.get("GaussianDiffusion", {}))
+    ddpm = GaussianDiffusion(unet_model, **config.get("GaussianDiffusion", {}))
 
     # 3). Build the EmojiDataset to train on
     dataset = EmojiDataset(ddpm.image_size)
