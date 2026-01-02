@@ -253,24 +253,6 @@ class GaussianDiffusion(nn.Module):
         loss = (torch.pow(target - y_hat, 2) * loss_weight).mean()  # Compute the weighted MSE Loss
         return loss
 
-    ### TODO: Add an easier way to sample here use this here
-    # Helper function to get CLIP text embedding during inference time.
-    from xcs231n.emoji_dataset import ClipEmbed
-    clip_embedder = ClipEmbed(device)
-
-    def get_text_emb(text):
-        return trainer.ds.embed_new_text(text, clip_embedder)
-
-    # Helper function to visualize generations.
-    def show_images(img):
-        # img: B x T x 3 x H x W
-        plt.figure(figsize=(10, 10))
-        img2 = img.clamp(0, 1).permute(0, 3, 1, 4, 2).flatten(0, 1).flatten(1, 2).cpu().numpy()
-        plt.imshow(img2)
-        plt.axis('off')
-
-        plt.show()
-
 
 ########################
 ### Helper Functions ###

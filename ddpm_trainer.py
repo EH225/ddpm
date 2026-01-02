@@ -16,19 +16,6 @@ def cycle(dl):
             yield data
 
 
-def get_device():
-    """
-    Auto-detects what hardware is available and returns the appropriate device.
-    """
-    if torch.backends.mps.is_available() and torch.backends.mps.is_built():
-        device = torch.device("mps")
-    elif torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
-    return device
-
-
 class Trainer:
     def __init__(self, diffusion_model, dataset, device: str, *args, train_batch_size: int = 256,
                  train_lr: float = 1e-3, weight_decay: float = 0.0, train_num_steps: int = 100000,

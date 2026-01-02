@@ -9,7 +9,8 @@ sys.path.insert(0, CURRENT_DIR)
 from emoji_dataset import EmojiDataset
 from unet import UNet
 from gaussian_diffusion import GaussianDiffusion
-from ddpm_trainer import Trainer, get_device
+from ddpm_trainer import Trainer
+from utils import get_device
 from typing import Dict
 
 
