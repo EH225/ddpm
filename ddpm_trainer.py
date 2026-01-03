@@ -60,6 +60,12 @@ class Trainer:
         self.results_folder = results_folder
         os.makedirs(self.results_folder, exist_ok=True)  # Create the directory if not already there
 
+        self.checkpoints_folder = os.path.join(self.results_folder, "checkpoints/")
+        os.makedirs(self.checkpoints_folder, exist_ok=True)
+
+        self.samples_folder = os.path.join(self.results_folder, "samples/")
+        os.makedirs(self.samples_folder, exist_ok=True)
+
         # Training step counter
         self.step = 0
 
@@ -70,7 +76,7 @@ class Trainer:
         :param milestone: An integer denoting the training timestep at which the model weightes were saved.
         :returns: None.
         """
-        checkpoint_path = os.path.join(self.results_folder, f"model-{milestone}.pt")
+        checkpoint_path = os.path.join(self.checkpoints_folder, f"model-{milestone}.pt")
         print(f"Saving model to {checkpoint_path}.")
         data = {"step": self.step,
                 "all_losses": self.all_losses,
@@ -86,7 +92,7 @@ class Trainer:
         :param milestone: An integer denoting the training timestep at which the model weightes were saved.
         :returns: None.
         """
-        checkpoint_path = os.path.join(self.results_folder, f"model-{milestone}.pt")
+        checkpoint_path = os.path.join(self.checkpoints_folder, f"model-{milestone}.pt")
         print(f"Loading model from {checkpoint_path}.")
         checkpoint_data = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
 
@@ -149,7 +155,7 @@ class Trainer:
                         all_images = self.diffusion_model.sample(batch_size=self.num_samples,
                                                                  model_kwargs=model_kwargs)
 
-                    save_image(all_images, os.path.join(self.results_folder, f"sample-{self.step}.png"),
+                    save_image(all_images, os.path.join(self.samples_folder, f"sample-{self.step}.png"),
                                nrow=int(math.sqrt(self.num_samples)))
 
                 pbar.update(1)
