@@ -3,6 +3,7 @@ This module contains general utility functions.
 """
 import torch
 
+
 def get_device():
     """
     Auto-detects what hardware is available and returns the appropriate device.

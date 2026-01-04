@@ -10,7 +10,6 @@ from torch import nn
 import torch.nn.functional as F
 from typing import Tuple, Dict
 
-
 def Upsample(dim_in: int, dim_out: int):
     """
     A Conv2d block that up-samples the image feature resolution a factor of 2.
@@ -122,7 +121,6 @@ class ResnetBlock(nn.Module):
         h = self.block2(h)
         return h + self.res_conv(x)
 
-
 class UNet(nn.Module):
     """
     U-Net CNN model definition consisting of:
@@ -135,7 +133,7 @@ class UNet(nn.Module):
     """
 
     def __init__(self, dim: int = 48, condition_dim: int = 512, dim_mults: Tuple[int] = (1, 2, 4, 8),
-                 channels: int = 3, uncond_prob: float = 0.2):
+                  channels: int = 3, uncond_prob: float = 0.2):
         """
         Instantiates a U-Net model.
 

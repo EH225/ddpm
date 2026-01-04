@@ -99,7 +99,7 @@ class Trainer:
         # Re-instate the training step counter, loss values, model weights and optimizer state from the
         # checkpoint data read in from disk
         self.step = checkpoint_data["step"]
-        self.all_losses = checkpoint_data["all_losses"]
+        self.all_losses = checkpoint_data.get("all_losses", [])
         self.diffusion_model.load_state_dict(checkpoint_data["model"])
         self.opt.load_state_dict(checkpoint_data["opt"])
 
