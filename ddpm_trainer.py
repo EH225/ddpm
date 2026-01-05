@@ -43,7 +43,7 @@ class Trainer:
         self.diffusion_model = diffusion_model
 
         self.device = device
-        self.amp_dtype = get_amp_dtype(device)
+        self.amp_dtype = get_amp_dtype(device.type)
         self.num_samples = 25  # The number of samples to generate periodically and save from the model
         self.save_every = save_every
         self.sample_every = sample_every
