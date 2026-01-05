@@ -21,6 +21,7 @@ def get_amp_dtype(device: str = "cuda"):
     """
     Determines the Automatic Mixed Precision data type that can be used on the current hardware.
     """
+    assert isinstance(device, str), "device must be a str"
     if device != "cuda" or not torch.cuda.is_available():
         return torch.float16
 

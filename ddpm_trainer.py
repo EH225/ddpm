@@ -21,7 +21,7 @@ class Trainer:
     def __init__(self, diffusion_model, dataset, device: str, *args, train_batch_size: int = 256,
                  train_lr: float = 1e-3, weight_decay: float = 0.0, train_num_steps: int = 100000,
                  adam_betas: Tuple[float] = (0.9, 0.99), sample_every: int = 1000, save_every: int = 5000,
-                 results_folder: str = None):
+                 results_folder: str = None, use_amp: bool = False):
         """
         A framework for loading, saving, and training a diffusion model.
 
@@ -43,7 +43,7 @@ class Trainer:
         self.diffusion_model = diffusion_model
 
         self.device = device
-        self.amp_dtype = get_amp_dtype(device.type)
+        self.amp_dtype = get_amp_dtype(device.type) if use_amp else None
         self.num_samples = 25  # The number of samples to generate periodically and save from the model
         self.save_every = save_every
         self.sample_every = sample_every
