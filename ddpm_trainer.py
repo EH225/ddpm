@@ -19,7 +19,7 @@ def cycle(dl):
 class Trainer:
     def __init__(self, diffusion_model, dataset, device: str, *args, train_batch_size: int = 256,
                  train_lr: float = 1e-3, weight_decay: float = 0.0, train_num_steps: int = 100000,
-                 adam_betas: Tuple[float] = (0.9, 0.99), sample_every: int = 1000, save_every: int = 10000,
+                 adam_betas: Tuple[float] = (0.9, 0.99), sample_every: int = 1000, save_every: int = 5000,
                  results_folder: str = None):
         """
         A framework for loading, saving, and training a diffusion model.
@@ -66,8 +66,8 @@ class Trainer:
         self.samples_folder = os.path.join(self.results_folder, "samples/")
         os.makedirs(self.samples_folder, exist_ok=True)
 
-        # Training step counter
-        self.step = 0
+        self.step = 0  # Training step counter
+        self.all_losses = []  # Aggregate loss values during training
 
     def save(self, milestone: int) -> None:
         """
@@ -94,7 +94,7 @@ class Trainer:
         """
         checkpoint_path = os.path.join(self.checkpoints_folder, f"model-{milestone}.pt")
         print(f"Loading model from {checkpoint_path}.")
-        checkpoint_data = torch.load(checkpoint_path, map_location=self.device, weights_only=True)
+        checkpoint_data = torch.load(checkpoint_path, map_location=self.device)
 
         # Re-instate the training step counter, loss values, model weights and optimizer state from the
         # checkpoint data read in from disk
@@ -105,34 +105,30 @@ class Trainer:
 
         # Move the model and the optimizer to the same device to continue training or for inference
         device = self.device
-        self.diffusion_model.to(device)
         for state in self.opt.state.values():
-            if isinstance(state, torch.Tensor):
-                state.data = state.data.to(device)
-            elif isinstance(state, dict):
-                for k, v in state.items():
-                    if isinstance(v, torch.Tensor):
-                        state[k] = v.to(device)
+            for k, v in state.items():
+                if torch.is_tensor(v):
+                    state[k] = v.to(device)
 
     def train(self) -> None:
         """
         Runs the training of the model until completion for self.train_num_steps total training iterations.
         Returns a list of the losses obtained for each training timestep.
         """
-        device = self.device
-        self.diffusion_model.to(device)  # Move the model to the correct device
-
-        self.all_losses = []
+        self.diffusion_model.to(self.device)  # Move the model to the correct device
+        self.diffusion_model.train()
 
         with tqdm(initial=self.step, total=self.train_num_steps) as pbar:
 
             while self.step < self.train_num_steps:  # Run until all training iterations are complete
                 data, model_kwargs = next(self.dl)
-                data = data.to(device)
-                model_kwargs["text_emb"] = model_kwargs["text_emb"].to(device)
+                data = data.to(self.device)
+                model_kwargs = {k: v.to(self.device) if torch.is_tensor(v) else v
+                                for k, v in model_kwargs.items()}
 
                 self.opt.zero_grad()  # Zero the gradients of the optimizer before computing the loss
-                loss = self.diffusion_model.p_losses(data, model_kwargs=model_kwargs)
+                with torch.autocast(device_type=self.device, dtype=torch.bfloat16):
+                    loss = self.diffusion_model.p_losses(data, model_kwargs=model_kwargs)
                 loss.backward()  # Compute gradients wrt the parameters of the model
                 torch.nn.utils.clip_grad_norm_(self.diffusion_model.parameters(), 1.0)  # Apply clipping
                 self.opt.step()  # Update the model parameters by taking a gradient step
@@ -150,12 +146,13 @@ class Trainer:
 
                     with torch.no_grad():
                         model_kwargs = self.ds.random_model_kwargs(self.num_samples)
-                        model_kwargs["text_emb"] = model_kwargs["text_emb"].to(device)
+                        model_kwargs["text_emb"] = model_kwargs["text_emb"].to(self.device)
 
                         all_images = self.diffusion_model.sample(batch_size=self.num_samples,
                                                                  model_kwargs=model_kwargs)
 
                     save_image(all_images, os.path.join(self.samples_folder, f"sample-{self.step}.png"),
                                nrow=int(math.sqrt(self.num_samples)))
+                    self.diffusion_model.train()  # Switch back to training mode once finished
 
                 pbar.update(1)

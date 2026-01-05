@@ -55,11 +55,11 @@ if __name__ == "__main__":
         "Trainer": {
             "train_batch_size": 256,
             "train_lr": 1e-3,
-            "weight_decay": 0.0,
+            "weight_decay": 0.00005,
             "train_num_steps": 100000,
             "sample_every": 1000,
-            "save_every": 10000,
-            "results_folder": f"{CURRENT_DIR}/results2"
+            "save_every": 5000,
+            "results_folder": f"{CURRENT_DIR}/results"
         }
     }
 

@@ -191,6 +191,7 @@ class GaussianDiffusion(nn.Module):
                 (batch_size, T+1, C, H, W) if return_all_timesteps is True else (batch_size, C, H, W)
         """
         model_kwargs = {} if model_kwargs is None else model_kwargs
+        self.eval() # Set to eval mode for inference, switch off dropout and effects batch norm
 
         shape = (batch_size, self.channels, self.image_size, self.image_size)  # (B, C, H, W)
         img = torch.randn(shape, device=self.betas.device)  # Generate Gaussian noise ~ N(0, 1)
@@ -203,6 +204,7 @@ class GaussianDiffusion(nn.Module):
 
         res = imgs[-1] if not return_all_timesteps else torch.stack(imgs, dim=1)
         res = self.unnormalize(res)  # Res has values [-1, 1] due to clamping, map to [0, 1] instead
+        self.train() # Return back to training mode afterwards
         return res
 
     def q_sample(self, x_0: torch.Tensor, t: torch.Tensor, noise: torch.Tensor) -> torch.Tensor:
