@@ -5,6 +5,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
 from typing import Tuple, List
+from utils import get_amp_dtype
 
 
 def cycle(dl):
@@ -42,6 +43,7 @@ class Trainer:
         self.diffusion_model = diffusion_model
 
         self.device = device
+        self.amp_dtype = get_amp_dtype(device)
         self.num_samples = 25  # The number of samples to generate periodically and save from the model
         self.save_every = save_every
         self.sample_every = sample_every
@@ -114,6 +116,7 @@ class Trainer:
         Runs the training of the model until completion for self.train_num_steps total training iterations.
         Returns a list of the losses obtained for each training timestep.
         """
+        print(f"Starting Training, device={self.device}, amp_dtype={self.amp_dtype}")
         self.diffusion_model.to(self.device)  # Move the model to the correct device
         self.diffusion_model.train()
 
@@ -126,8 +129,8 @@ class Trainer:
                                 for k, v in model_kwargs.items()}
 
                 self.opt.zero_grad()  # Zero the gradients of the optimizer before computing the loss
-                # with torch.autocast(device_type=self.device.type, dtype=torch.float16):
-                loss = self.diffusion_model.p_losses(data, model_kwargs=model_kwargs)
+                loss = self.diffusion_model.p_losses(data, model_kwargs=model_kwargs,
+                                                     amp_dtype=self.amp_dtype)
                 loss.backward()  # Compute gradients wrt the parameters of the model
                 torch.nn.utils.clip_grad_norm_(self.diffusion_model.parameters(), 1.0)  # Apply clipping
                 self.opt.step()  # Update the model parameters by taking a gradient step

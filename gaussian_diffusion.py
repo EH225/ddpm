@@ -191,7 +191,7 @@ class GaussianDiffusion(nn.Module):
                 (batch_size, T+1, C, H, W) if return_all_timesteps is True else (batch_size, C, H, W)
         """
         model_kwargs = {} if model_kwargs is None else model_kwargs
-        self.eval() # Set to eval mode for inference, switch off dropout and effects batch norm
+        self.eval()  # Set to eval mode for inference, switch off dropout and effects batch norm
 
         shape = (batch_size, self.channels, self.image_size, self.image_size)  # (B, C, H, W)
         img = torch.randn(shape, device=self.betas.device)  # Generate Gaussian noise ~ N(0, 1)
@@ -204,7 +204,7 @@ class GaussianDiffusion(nn.Module):
 
         res = imgs[-1] if not return_all_timesteps else torch.stack(imgs, dim=1)
         res = self.unnormalize(res)  # Res has values [-1, 1] due to clamping, map to [0, 1] instead
-        self.train() # Return back to training mode afterwards
+        self.train()  # Return back to training mode afterwards
         return res
 
     def q_sample(self, x_0: torch.Tensor, t: torch.Tensor, noise: torch.Tensor) -> torch.Tensor:
@@ -225,7 +225,7 @@ class GaussianDiffusion(nn.Module):
         x_t = mu + sigma * noise  # torch.randn_like(x_start)
         return x_t
 
-    def p_losses(self, x_0: torch.Tensor, model_kwargs: Dict = None) -> torch.Tensor:
+    def p_losses(self, x_0: torch.Tensor, model_kwargs: Dict = None, amp_dtype=None) -> torch.Tensor:
         """
         Computes a loss value for training using an input set of original, clean images x_0 and a dictionary
         of model_kwargs that can provide text embeddings as context. The following process is used:
@@ -250,8 +250,15 @@ class GaussianDiffusion(nn.Module):
         # Implements the loss function according to Eq. (14) of the DDPM paper
         # Sample x_t from q(x_t | x_0) using the `q_sample` function
         x_t = self.q_sample(x_0, t, noise)  # Generate a noisy image using the starting image
-        y_hat = self.model(x_t, t, model_kwargs)  # Will be either the x_start or noise but will
-        # match what's in target already
+        # Compute the y-hat values, will either be x_0 or noise, but will match target from above
+        if amp_dtype is not None:  # Use torch.autocast to speed up training if amp_dtype is defined
+            with torch.autocast(device_type=x_t.device.type, dtype=amp_dtype):  # FP16 on T4, BF16 on A100
+                y_hat = self.model(x_t, t, model_kwargs)
+        else:  # If no amp_dtype defined, then don't use torch.autocast
+            y_hat = self.model(x_t, t, model_kwargs)
+
+        # Convert to FP32 before computing the loss
+        y_hat, target, loss_weight = y_hat.float(), target.float(), loss_weight.float()
         loss = (torch.pow(target - y_hat, 2) * loss_weight).mean()  # Compute the weighted MSE Loss
         return loss
 
