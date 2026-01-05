@@ -126,7 +126,7 @@ class Trainer:
                                 for k, v in model_kwargs.items()}
 
                 self.opt.zero_grad()  # Zero the gradients of the optimizer before computing the loss
-                with torch.autocast(device_type=self.device.type, dtype=torch.bfloat16):
+                with torch.autocast(device_type=self.device.type, dtype=torch.float16):
                     loss = self.diffusion_model.p_losses(data, model_kwargs=model_kwargs)
                 loss.backward()  # Compute gradients wrt the parameters of the model
                 torch.nn.utils.clip_grad_norm_(self.diffusion_model.parameters(), 1.0)  # Apply clipping
