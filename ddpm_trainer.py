@@ -148,8 +148,9 @@ class Trainer:
 
                     with torch.no_grad():
                         model_kwargs = self.ds.random_model_kwargs(self.num_samples)
-                        model_kwargs["text_emb"] = model_kwargs["text_emb"].to(self.device)
-
+                        model_kwargs = {k: v.to(self.device) if torch.is_tensor(v) else v
+                                        for k, v in model_kwargs.items()}
+                        model_kwargs["cfg_scale"] = 1.0
                         all_images = self.diffusion_model.sample(batch_size=self.num_samples,
                                                                  model_kwargs=model_kwargs)
 

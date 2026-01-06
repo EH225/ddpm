@@ -231,7 +231,7 @@ class UNet(nn.Module):
         :returns: An output tensor of shape (batch_size, channels, height, width) matching the input x.
         """
         model_kwargs = {} if model_kwargs is None else model_kwargs
-        cfg_scale = model_kwargs.pop("cfg_scale")
+        cfg_scale = model_kwargs["cfg_scale"]
         print("Classifier-free guidance scale:", cfg_scale)
         model_kwargs = copy.deepcopy(model_kwargs)  # Copy to avoid mutation below
         # Apply classifier-free guidance using:

@@ -59,7 +59,8 @@ if __name__ == "__main__":
             "train_num_steps": 100000,
             "sample_every": 1000,
             "save_every": 5000,
-            "results_folder": f"{CURRENT_DIR}/results"
+            "results_folder": f"{CURRENT_DIR}/results",
+            "use_amp": False,
         }
     }
 
