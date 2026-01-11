@@ -6,6 +6,6 @@ This repository contains code for the Denoising Diffusion Probabilistic Model fo
 - `utils.py`: This file contains helper functions used throughout the project.
 - `ddpm_trainer.py`: This module contains code used to run the pytorch training loop.
 - `run.py`: This is the main driver script of the project and is used to train diffusion model i.e. `python run.py`.
-- `env_req`: This folder contains `environment.yml` and `environment_cuda.yml` whihc are files denoting the configuration of the virtual environment required to run the modules of this project.
+- `env_req`: This folder contains `environment.yml` and `environment_cuda.yml` which are files denoting the configuration of the virtual environment required to run the modules of this project.
 
-This project was based on the repo provided by assignment 4 of Stanford University's Deep Learning for Computer Vision (XCS231N) course, with many modifications.
+This project leveraged materials from Stanford University's Deep Learning for Computer Vision ([XCS231N](https://cs231n.stanford.edu/)) course, with many modifications.

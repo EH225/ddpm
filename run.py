@@ -10,7 +10,6 @@ from emoji_dataset import EmojiDataset
 from unet import UNet
 from gaussian_diffusion import GaussianDiffusion
 from ddpm_trainer import Trainer
-from utils import get_device
 from typing import Dict
 
 
@@ -30,7 +29,7 @@ def train_model(config: Dict) -> None:
     dataset = EmojiDataset(ddpm.image_size)
 
     # 4). Configure the training pipeline
-    trainer = Trainer(ddpm, dataset, get_device(), **config.get("Trainer", {}))
+    trainer = Trainer(ddpm, dataset, **config.get("Trainer", {}))
 
     # 5). Train the model to completion
     trainer.train()
