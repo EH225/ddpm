@@ -225,7 +225,7 @@ class GaussianDiffusion(nn.Module):
         x_t = mu + sigma * noise  # torch.randn_like(x_start)
         return x_t
 
-    def p_losses(self, x_0: torch.Tensor, model_kwargs: Dict = None, amp_dtype=None) -> torch.Tensor:
+    def p_losses(self, x_0: torch.Tensor, model_kwargs: Dict = None) -> torch.Tensor:
         """
         Computes a loss value for training using an input set of original, clean images x_0 and a dictionary
         of model_kwargs that can provide text embeddings as context. The following process is used:
@@ -251,14 +251,9 @@ class GaussianDiffusion(nn.Module):
         # Sample x_t from q(x_t | x_0) using the `q_sample` function
         x_t = self.q_sample(x_0, t, noise)  # Generate a noisy image using the starting image
         # Compute the y-hat values, will either be x_0 or noise, but will match target from above
-        if amp_dtype is not None:  # Use torch.autocast to speed up training if amp_dtype is defined
-            with torch.autocast(device_type=x_t.device.type, dtype=amp_dtype):  # FP16 on T4, BF16 on A100
-                y_hat = self.model(x_t, t, model_kwargs)
-        else:  # If no amp_dtype defined, then don't use torch.autocast
-            y_hat = self.model(x_t, t, model_kwargs)
-
+        y_hat = self.model(x_t, t, model_kwargs)
         # Convert to FP32 before computing the loss
-        y_hat, target, loss_weight = y_hat.float(), target.float(), loss_weight.float()
+        # y_hat, target, loss_weight = y_hat.float(), target.float(), loss_weight.float()
         loss = (torch.pow(target - y_hat, 2) * loss_weight).mean()  # Compute the weighted MSE Loss
         return loss
 
