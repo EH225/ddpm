@@ -208,7 +208,10 @@ class Trainer:
         msg = f"Starting Training, step={self.step}, device={self.device}, amp_dtype={self.amp_dtype}"
         self.logger.info(msg)
         self.diffusion_model.to(self.device)  # Move the model to the correct device
-        self.diffusion_model.train() # Make sure it is in training mode
+        self.diffusion_model.train() # Set to train for model training
+        self.ema_model.to(self.device) # Move the EMA model used for sampling to the correct device
+        self.ema_model.eval() # Set to eval for sampling training
+
         self.ema_model.requires_grad_(False)
 
         scaler = None
@@ -266,7 +269,6 @@ class Trainer:
                 if self.step % self.sample_every == 0 or self.step == self.train_num_steps:
                     self.logger.info((f"loss={loss.item():.4f}, grad_norm={grad_norm:.3f}, step={self.step}"))
                     self.report_lr_wd()
-                    self.diffusion_model.eval() # Switch to eval model for sampling
 
                     with torch.no_grad():
                         model_kwargs = self.ds.random_model_kwargs(self.num_samples)
@@ -283,7 +285,6 @@ class Trainer:
 
                     save_image(all_images, os.path.join(self.samples_folder, f"sample-{self.step}.png"),
                                nrow=int(math.sqrt(self.num_samples)))
-                    self.diffusion_model.train()  # Switch back to training mode once finished
 
                 del data, model_kwargs, loss
 
